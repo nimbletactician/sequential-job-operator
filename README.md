@@ -1,3 +1,92 @@
+# Kubernetes Controller Development Mental Model
+
+## Core APIs and Building Blocks
+
+### Controller-Runtime Framework
+
+- **Manager**: Coordinates multiple controllers and shared dependencies
+- **Client**: Provides type-safe access to Kubernetes resources
+- **Scheme**: Registry that maps Go types to Kubernetes API types
+- **Reconciler**: Interface implementing the reconciliation loop
+- **Logger**: Structured, contextual logging
+
+### Client-Go Fundamentals
+
+- Handles REST API communication
+- Manages caching for efficient operations
+- Provides typed and untyped clients
+- Implements watch streams for change notifications
+- Handles authentication and connection management
+
+## Reconciliation Pattern
+
+The controller reconciliation loop follows a consistent pattern:
+
+1. Observe: Get the current state of the resource
+2. Compare: Determine what needs to change
+3. Act: Make the necessary changes
+4. Report: Update status to reflect current state
+
+The pattern is:
+- Level-triggered (not event-driven): Works with current state, not individual changes
+- Idempotent: Can run multiple times with same result
+- Convergent: Makes incremental progress toward desired state
+
+## Resource Ownership and Lifecycle
+
+### Owner References
+
+- **SetControllerReference**: Establishes parent-child relationships
+- Enables automatic garbage collection
+- Ensures child resources are deleted when parent is deleted
+
+### Finalizers
+
+- Prevent premature deletion of resources
+- Enable controlled cleanup
+- Follow pattern: add finalizer → handle deletion → remove finalizer
+
+## Status Management
+
+Status reflects the observed state, not the desired state:
+- Use standard condition patterns (Type, Status, Reason, Message)
+- Track observedGeneration to detect spec changes
+- Update frequently to maintain accurate state
+- Separate status subresource updates from spec updates
+
+## Error Handling
+
+Robust error handling is critical:
+- Return errors for automatic requeuing
+- Use RequeueAfter for scheduled rechecks
+- Handle transient errors differently from permanent ones
+- Use contextual logging for troubleshooting
+
+## Mental Model Development
+
+Think of controllers as "state convergers" rather than "event handlers":
+
+1. State-based, not event-based: Controllers don't react to specific events but reconcile current state
+2. Declarative, not imperative: Define what should exist, not steps to create it
+3. Eventual consistency: System will converge over time, not immediately
+4. Graceful degradation: Handle failures without breaking the entire system
+
+Developing this mental model requires understanding:
+- The Kubernetes resource model
+- Kubernetes object metadata and lifecycle
+- The watch-cache architecture
+- Controller responsibilities and boundaries
+
+When writing a controller, always ask:
+- "What should exist given this spec?"
+- "What currently exists?"
+- "What actions bridge the gap?"
+- "How do I communicate current state?"
+
+This mental model applies to all Kubernetes controllers from core components to your custom controllers.
+
+---
+
 # SequentialJob Kubernetes Operator
 
 A Kubernetes operator for executing a sequence of jobs in order. Built using the [kubebuilder](https://book.kubebuilder.io/) framework.
