@@ -1,0 +1,47 @@
+apiVersion: batch.example.com/v1alpha1
+kind: SequentialJob
+metadata:
+  name: example-job-sequence
+spec:
+  containers:
+    - name: step1
+      image: busybox
+      command: ["sh", "-c"]
+      args: ["echo 'Processing step 1'; sleep 10; echo 'Step 1 complete'"]
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "100m"
+        limits:
+          memory: "128Mi"
+          cpu: "200m"
+    - name: step2
+      image: busybox
+      command: ["sh", "-c"]
+      args: ["echo 'Processing step 2'; sleep 15; echo 'Step 2 complete'"]
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "100m"
+        limits:
+          memory: "128Mi"
+          cpu: "200m"
+    - name: step3
+      image: busybox
+      command: ["sh", "-c"]
+      args: ["echo 'Final step processing'; sleep 5; echo 'Sequence complete'"]
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "100m"
+        limits:
+          memory: "128Mi"
+          cpu: "200m"
+  template:
+    metadata:
+      labels:
+        app: sequential-job-example
+    spec:
+      volumes:
+        - name: shared-data
+          emptyDir: {}
